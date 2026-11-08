@@ -1,0 +1,63 @@
+
+---
+- name: Execute job on external OpenShift
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Create Kubernetes Job
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: "{{ job_name }}"
+            namespace: "{{ namespace }}"
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 900
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: workload
+                    image: "{{ job_image }}"
+                    imagePullPolicy: IfNotPresent
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "Hello from OpenShift!"
+                        echo "Execution started:"
+                        date
+                        sleep 10
+                        echo "Job completed successfully!"
+      no_log: true
+
+    - name: Wait for Job completion
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig }}"
+        api_version: batch/v1
+        kind: Job
+        name: "{{ job_name }}"
+        namespace: "{{ namespace }}"
+      register: job_status
+      until: >
+        (job_status.resources | length > 0) and
+        (
+          (job_status.resources[0].status.succeeded | default(0) | int > 0)
+          or
+          (job_status.resources[0].status.failed | default(0) | int > 0)
+        )
+      retries: 180
+      delay: 5
+
+    - name: Display result
+      ansible.builtin.debug:
+        msg: >-
+          {{ 'SUCCESS' if
+          (job_status.resources[0].status.succeeded | default(0) | int > 0)
+          else 'FAILED' }}
+

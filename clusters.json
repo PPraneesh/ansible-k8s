@@ -1,0 +1,6 @@
+{
+  "ORG-001": {
+    "kubeconfig": "credentials/org-001.yaml",
+    "namespace": "parshipraneesh8-dev"
+  }
+}
