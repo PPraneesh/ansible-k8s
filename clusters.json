@@ -1,6 +1,12 @@
 {
-  "ORG-001": {
-    "kubeconfig": "credentials/org-001.yaml",
-    "namespace": "parshipraneesh8-dev"
+  "organizations": {
+    "org-001": {
+      "clusters": {
+        "cluster-a": {
+          "kubeconfig": "credentials/org-1.yaml",
+          "namespace": "parshipraneesh8-dev"
+        }
+      }
+    }
   }
 }
